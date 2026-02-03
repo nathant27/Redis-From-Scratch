@@ -1,7 +1,5 @@
 Making Redis from scratch
 
-Will start off basing it from https://build-your-own.org/redis/
-
 Probably in C++? Since I want to continue practicing it while its still fresh.
 Based on what I hear about the original design of Redis, it was kind of a preference, and in general
 what I hear is that C in general just creates a lot cleaner code especially compared to amateur C++.
