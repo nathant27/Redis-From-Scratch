@@ -1,2 +1,3 @@
 # Interesting note, gitignore doesn't use full regex. Uses shell glob patterns. Support *, ?, [abc], !, **(any number of subdirs). Very simple
 *~
+*.out

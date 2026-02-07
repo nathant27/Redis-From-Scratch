@@ -4,12 +4,12 @@
 #include <string>
 #include <iostream>
 
+#define HELPERS_H_IMPLEMENTATION
+#include "./helpers.h"
 // C styling with a little bit of C++ just for nice to haves.
 // Return values for successes or failures
 // std::cout for printing
 // C style casting
-
-int error(std::string err_msg) { std::cout << err_msg << std::endl; return -1; }
 
 static void read_from_user(int connfd) {
     char rbuf[64];
