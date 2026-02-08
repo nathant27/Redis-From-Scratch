@@ -24,7 +24,7 @@ static void read_from_user(int connfd) {
 }
 
 
-int main (int argc, char *argv[]){
+int main (){
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     // AF_INET is for IPv4, SOCK_STREAM FOR TCP cause byte stream. Third arg is additional settings, but unnecessary
 
@@ -46,7 +46,7 @@ int main (int argc, char *argv[]){
     while (true){
         struct sockaddr_in client_addr{};
         socklen_t addr_len = sizeof(client_addr);
-        int connfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
+        int connfd = accept(listen_fd, (struct sockaddr *)&client_addr, &addr_len);
         if (connfd < 0) continue;
         
         read_from_user(connfd);
