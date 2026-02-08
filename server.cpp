@@ -49,6 +49,6 @@ int main (int argc, char *argv[]){
         int connfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
         if (connfd < 0) continue;
         
-        
+        read_from_user(connfd);
     }
 }
