@@ -11,5 +11,8 @@ C++ has a lot of features, and a lot of power, but usually used in the wrong way
 Follow good C++ practices, and good OOP practices
 
 C++ Style Guide: TBD
+    - compile with g++ -Wall -Wextra -O2 -g
+    - -Werror can be used as well. Turns warnings into errors
+    - "-O2" flag is an extra layer of optimization and error checking at the same time.
 
 OOP Standards: TBD as well. Atleast SOLID principles. Are there any more? I'll see tomorrow
