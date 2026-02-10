@@ -2,10 +2,10 @@ TARGETS = server client
 
 all: $(TARGETS)
 
-server: server.cpp
+server: server.cpp helpers.h
 	g++ -Wall -Wextra -O2 -g server.cpp -o server
 
-client: client.cpp
+client: client.cpp helpers.h
 	g++ -Wall -Wextra -O2 -g client.cpp -o client
 
 clean:

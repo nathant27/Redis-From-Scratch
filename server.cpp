@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cassert> // for assert
 #include <unistd.h>
+#include <cstring>
 
 #define HELPERS_H_IMPLEMENTATION
 #include "./helpers.h"
@@ -25,34 +26,49 @@ static void read_from_user(int connfd) {
     send(connfd, rbuf, sizeof(rbuf), 0); 
 }
 
-// properly reading from a TCP socket. Must be through a loop.
-static int32_t read_full(int fd, char *buf, size_t n) {
-    while (n > 0) {
-        ssize_t rv = read(fd, buf, n);
-        if (rv <= 0) {
-            return -1; // 0 EOF, -1 ERROR
-        }
-        assert(static_cast<size_t>(rv) <= n);
-        n -= static_cast<size_t>(rv);
-        buf += rv;
+constexpr size_t k_max_msg = 4096;
+
+static int32_t one_request(int connfd){
+    std::cout << "inside one_request" << std::endl;
+    // get size of message
+    char rbuf[4 + k_max_msg]; // 4 byte header
+    errno = 0;
+    std::cout << "before reading header" << std::endl;
+    int32_t read_rv = read_full(connfd, rbuf, 4);
+    std::cout << "inside one_request, after read_full header" << std::endl;
+    errno = 0;
+    if (read_rv == -1){
+        error(errno == 0 ? "EOF" : "read_full() read error");
+        return read_rv;
     }
-    return 0;
+    uint32_t len = 0;
+    memcpy(&len, rbuf, 4);
+    if (len > k_max_msg){
+        error("message too long");
+        return -1;
+    }
+
+    // request the body of the message
+    read_rv = read_full(connfd, &rbuf[4], len);
+    if (read_rv == -1){
+        error("read() error");
+        return -1;
+    }
+
+    // action
+    printf("client says %.*s\n", len, &rbuf[4]);
+
+    // reply using same protocal
+    const char reply[] = "world";
+    char wbuf[4 + sizeof(reply)];
+    len = static_cast<uint32_t>(strlen(reply));
+    memcpy(wbuf, &len, 4);
+    memcpy(&wbuf[4], reply, len); // can't I just use wbuf + 4? or is it safer to use &wbuf[4]?
+    return write_all(connfd, wbuf, 4 + len); 
 }
 
-//properly writing n bytes to TCP socket. Also must be in a loop
-static int32_t write_full(int fd, char *buf, size_t n){
-    while (n > 0){
-        ssize_t rv = write(fd, buf, n);
-        if (rv <= 0){
-            return -1; // ERROR or early EOF
-        }
 
-        assert(static_cast<size_t>(rv) <= n);
-        n -= static_cast<size_t>(rv);
-        buf += rv;
-    }
-    return 0;
-}
+
 
 int main (){
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,17 +88,20 @@ int main (){
         // Each octet in address is 8 bits, aka 1 byte, so max value is 255. Can be represented with 2 hexadecimal digits
 
     int listen_fd = listen(fd, SOMAXCONN); //SOMAXCONN is size of queue. Doesn't matter cause accept() won't bottleneck
-                                           
+    std::cout << "listen_fd: " << listen_fd << std::endl;
     while (true){
         struct sockaddr_in client_addr{};
         socklen_t addr_len = sizeof(client_addr);
         int connfd = accept(listen_fd, (struct sockaddr *)&client_addr, &addr_len);
         if (connfd < 0){
-            std::cerr << "accept error" << std::endl; 
+            //std::cerr << "accept error" << std::endl; 
             continue;   
         }
-        
-        read_from_user(connfd);
-
+         
+        printf("connfd %d\n", connfd);
+        one_request(connfd);
+        return 0;
     }
-}
+    
+
+   }
