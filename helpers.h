@@ -17,7 +17,7 @@ static int32_t read_full(int fd, char *buf, size_t n) {
     while (n > 0) {
         ssize_t rv = read(fd, buf, n);
         if (rv <= 0) {
-            return -1; // 0 EOF, -1 ERROR
+            return -1; // read_rv: 0 EOF, -1 ERROR
         }
         assert(static_cast<size_t>(rv) <= n);
         n -= static_cast<size_t>(rv);
