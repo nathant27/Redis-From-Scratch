@@ -29,4 +29,18 @@ Solution to this: Event based concurrency with event loops.
     - Also saw this in ICS 53. Something with multiplexor whatever. Harder to understand what happened behind the scenes but I'll trust the process for now
     - Pretty sure Node.JS runtime env uses it. Drives NGINX, Redis, and Golang's runtime as well.
 
+## Prasing protocol 
+
+Byte stream starts with payload size(int) and variable sized payload.
+
+During parsing...
+You CANNOT handle read and write by checking if ret/rv != 4 or n(4 being the payload size and n being length of payload)
+because read/write can return less than requested number of bytes in normal condition (aka no error, no EOF)
+
+**Common Mistake**
+Thinking that read corresponds to write from peer. NOT POSSIBLE because byte stream **DOES NOT PRESERVE BOUNDARIES**
+
+Solution, do it in a loop
+
+
 

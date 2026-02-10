@@ -3,6 +3,8 @@
 #include <arpa/inet.h> //htons and l
 #include <string>
 #include <iostream>
+#include <cassert> // for assert
+#include <unistd.h>
 
 #define HELPERS_H_IMPLEMENTATION
 #include "./helpers.h"
@@ -23,6 +25,34 @@ static void read_from_user(int connfd) {
     send(connfd, rbuf, sizeof(rbuf), 0); 
 }
 
+// properly reading from a TCP socket. Must be through a loop.
+static int32_t read_full(int fd, char *buf, size_t n) {
+    while (n > 0) {
+        ssize_t rv = read(fd, buf, n);
+        if (rv <= 0) {
+            return -1; // 0 EOF, -1 ERROR
+        }
+        assert(static_cast<size_t>(rv) <= n);
+        n -= static_cast<size_t>(rv);
+        buf += rv;
+    }
+    return 0;
+}
+
+//properly writing n bytes to TCP socket. Also must be in a loop
+static int32_t write_full(int fd, char *buf, size_t n){
+    while (n > 0){
+        ssize_t rv = write(fd, buf, n);
+        if (rv <= 0){
+            return -1; // ERROR or early EOF
+        }
+
+        assert(static_cast<size_t>(rv) <= n);
+        n -= static_cast<size_t>(rv);
+        buf += rv;
+    }
+    return 0;
+}
 
 int main (){
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -47,8 +77,12 @@ int main (){
         struct sockaddr_in client_addr{};
         socklen_t addr_len = sizeof(client_addr);
         int connfd = accept(listen_fd, (struct sockaddr *)&client_addr, &addr_len);
-        if (connfd < 0) continue;
+        if (connfd < 0){
+            std::cerr << "accept error" << std::endl; 
+            continue;   
+        }
         
         read_from_user(connfd);
+
     }
 }
