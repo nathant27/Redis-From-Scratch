@@ -16,8 +16,13 @@ int error(std::string err_msg)
 static int32_t read_full(int fd, char *buf, size_t n) {
     while (n > 0) {
         ssize_t rv = read(fd, buf, n);
-        if (rv <= 0) {
-            return -1; // read_rv: 0 EOF, -1 ERROR
+        if (rv == -1){ //read error(). errno set bc syscall
+            if (errno == EINTR) continue;
+
+            return -1;
+        }
+        else if (rv == 0) {
+            return -1; // EOF
         }
         assert(static_cast<size_t>(rv) <= n);
         n -= static_cast<size_t>(rv);
