@@ -15,7 +15,6 @@ int error(std::string err_msg)
 // properly reading from a TCP socket. Must be through a loop.
 static int32_t read_full(int fd, char *buf, size_t n) {
     while (n > 0) {
-        printf("n is %lu\n", n);
         ssize_t rv = read(fd, buf, n);
         if (rv <= 0) {
             return -1; // 0 EOF, -1 ERROR

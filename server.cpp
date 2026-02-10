@@ -17,25 +17,24 @@
 static void read_from_user(int connfd) {
     char rbuf[64];
     ssize_t n = recv(connfd, rbuf, sizeof(rbuf) - 1, 0); //Read only rbuf-1 so it properly null terminates
+    if (n > 0)
+        rbuf[n] = '\0';
     if (n < 0){
         error("read() error");
         return;
     }
 
     std::cout << "Client msg: " << rbuf << std::endl;
-    send(connfd, rbuf, sizeof(rbuf), 0); 
+    send(connfd, rbuf, n, 0); 
 }
 
 constexpr size_t k_max_msg = 4096;
 
 static int32_t one_request(int connfd){
-    std::cout << "inside one_request" << std::endl;
     // get size of message
     char rbuf[4 + k_max_msg]; // 4 byte header
     errno = 0;
-    std::cout << "before reading header" << std::endl;
     int32_t read_rv = read_full(connfd, rbuf, 4);
-    std::cout << "inside one_request, after read_full header" << std::endl;
     errno = 0;
     if (read_rv == -1){
         error(errno == 0 ? "EOF" : "read_full() read error");
@@ -67,9 +66,6 @@ static int32_t one_request(int connfd){
     return write_all(connfd, wbuf, 4 + len); 
 }
 
-
-
-
 int main (){
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     // AF_INET is for IPv4, SOCK_STREAM FOR TCP cause byte stream. Third arg is additional settings, but unnecessary
@@ -84,24 +80,30 @@ int main (){
     addr.sin_port = htons(1234); // port
     addr.sin_addr.s_addr = htonl(0); // wildcard IP 0.0.0.0
     int bind_rv = bind(fd, (const struct sockaddr *)&addr, sizeof(addr)); // sizeof(addr) needed to determine between IPv4 and IPv6
-    if (bind_rv) { error("bind() error"); }
+    if (bind_rv) { 
+        return error("bind() error"); 
+    }
         // Each octet in address is 8 bits, aka 1 byte, so max value is 255. Can be represented with 2 hexadecimal digits
 
-    int listen_fd = listen(fd, SOMAXCONN); //SOMAXCONN is size of queue. Doesn't matter cause accept() won't bottleneck
-    std::cout << "listen_fd: " << listen_fd << std::endl;
+    if (listen(fd, SOMAXCONN)) { //SOMAXCONN is size of queue. Doesn't matter cause accept() won't bottleneck
+        return error("listen () error");
+    }
+
+    //listen just makes the socket listen. Return value is just the success or failure
     while (true){
         struct sockaddr_in client_addr{};
         socklen_t addr_len = sizeof(client_addr);
-        int connfd = accept(listen_fd, (struct sockaddr *)&client_addr, &addr_len);
+        int connfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
         if (connfd < 0){
             //std::cerr << "accept error" << std::endl; 
             continue;   
         }
          
-        printf("connfd %d\n", connfd);
+        //printf("connfd %d\n", connfd);
         one_request(connfd);
-        return 0;
+        one_request(connfd);
+        close(connfd); 
     }
     
 
-   }
+}

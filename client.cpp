@@ -11,7 +11,6 @@
 constexpr uint32_t k_max_msg = 4096;
 
 static uint32_t query(int fd, const char *text){
-    std::cout << "querying server with msg: " << text << std::endl;
     uint32_t len = static_cast<uint32_t>(strlen(text));
     if (len > k_max_msg) {
         return error("msg len too long");
@@ -24,12 +23,10 @@ static uint32_t query(int fd, const char *text){
     if(int32_t err = write_all(fd, wbuf, 4 + len)) {
         return err;
     }
-    std::cout << "done sending request" << std::endl;
     // 4 byte header
     char rbuf[4 + k_max_msg];
     errno = 0;
     int32_t err = read_full(fd, rbuf, 4);
-    std::cout << "after read_full()" << std::endl;
     if (err){
         error(errno == 0 ? "EOF" : "read() error");
         return err;
@@ -40,14 +37,12 @@ static uint32_t query(int fd, const char *text){
         return -1;
     }
     
-    printf("before read");
     // read reply body
     err = read_full(fd, &rbuf[4], len);
     if (err){
         error("read() error");
         return err;
     }
-    printf("after read");
     printf("server says: %.*s\n", len, &rbuf[4]);
     return 0;
 }
@@ -59,8 +54,8 @@ int main (){
 
     struct sockaddr_in addr = {};
     addr.sin_family = AF_INET;
-    addr.sin_port = ntohs(1234);
-    addr.sin_addr.s_addr = ntohl(INADDR_LOOPBACK); // 127.0.0.1
+    addr.sin_port = htons(1234);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
     
     int connect_ret = connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
     if (connect_ret < 0)
